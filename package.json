@@ -1,0 +1,217 @@
+{
+    "name": "cogent",
+    "displayName": "Cogent",
+    "description": "Cogent is a Copilot extension that gives it agenting capabilities like executing commands, editing and reading files, and more.",
+    "version": "1.0.1",
+    "engines": {
+        "vscode": "^1.95.0"
+    },
+    "categories": [
+        "Other",
+        "AI"
+    ],
+    "icon": "assets/cogent.jpeg",
+    "license": "MIT",
+    "publisher": "kturung",
+    "repository": {
+		"type": "git",
+		"url": "https://github.com/kturung/cogent"
+	},
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "configuration": {
+            "title": "Cogent",
+            "properties": {
+                "cogent.use_full_workspace": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Include full workspace content in the initial prompt. If disabled, files will be read on demand.\n\n Note: Not recommended for large workspaces.",
+                    "order": 1
+                },
+                "cogent.autoConfirmTools": {
+                    "type": "object",
+                    "properties": {
+                        "writeFile": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Auto confirm file creation operations"
+                        },
+                        "updateFile": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Auto confirm file update operations"
+                        },
+                        "runCommand": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Auto confirm command execution"
+                        },
+                        "applyDiff": {
+                            "type": "boolean",
+                            "default": false,
+                            "description": "Auto confirm diff apply operations"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "default": {
+                        "writeFile": false,
+                        "updateFile": false,
+                        "runCommand": false,
+                        "applyDiff": false
+                    },
+                    "description": "Configure which tools should auto-confirm their operations without showing confirmation dialog",
+                    "order": 2
+                },
+                "cogent.debug": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable debug logging in the output channel",
+                    "order": 3
+                },
+                "cogent.commandTimeout": {
+                    "type": "number",
+                    "default": 45,
+                    "description": "Timeout in seconds for terminal commands",
+                    "order": 4
+                }
+            }
+        },
+        "chatParticipants": [
+      {
+        "id": "cogent.assistant",
+        "name": "cogent",
+        "description": "AI-powered development assistant",
+        "isSticky": true
+      }
+    ],
+        "languageModelTools": [
+            {
+                "name": "cogent_writeFile",
+                "tags": ["files", "create"],
+                "displayName": "Create New File",
+                "modelDescription": "Create a new file in the workspace with specified content",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Relative path for the new file"
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "The full text content to write into the file"
+                        }
+                    },
+                    "required": ["path", "content"]
+                }
+            },
+            {
+                "name": "cogent_updateFile",
+                "tags": ["files", "update"],
+                "displayName": "Update File",
+                "modelDescription": "Update an existing file in the workspace with new content",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Relative path to the file"
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "New content for the file"
+                        }
+                    },
+                    "required": ["path", "content"]
+                }
+            },
+            {
+                "name": "cogent_runCommand",
+                "tags": ["terminal", "command"],
+                "displayName": "Run Command",
+                "modelDescription": "Execute a command in the VS Code terminal",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "description": "Command to execute"
+                        }
+                    },
+                    "required": ["command"]
+                }
+            },
+            {
+                "name": "cogent_readFile",
+                "tags": ["files", "read"],
+                "displayName": "Read File",
+                "modelDescription": "Read the contents of multiple files in the workspace",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "paths": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "description": "Relative path to the file"
+                            },
+                            "description": "Array of file paths to read"
+                        }
+                    },
+                    "required": ["paths"]
+                }
+            },
+            {
+                "name": "cogent_applyDiff",
+                "tags": ["files", "update", "diff"],
+                "displayName": "Apply Diff",
+                "modelDescription": "This tool allows for precise, surgical replaces to files by specifying exactly what content to search for and what to replace it with",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Relative path to the file to modify"
+                        },
+                        "diff": {
+                            "type": "string",
+                            "description": "Diff content in the format: <<<<<<< SEARCH\\n[search content]\\n=======\\n[replace content]\\n>>>>>>> REPLACE"
+                        },
+                        "start_line": {
+                            "type": "number",
+                            "description": "Line number where the search block starts"
+                        },
+                        "end_line": {
+                            "type": "number",
+                            "description": "Line number where the search block ends"
+                        }
+                    },
+                    "required": ["path", "diff", "start_line", "end_line"]
+                }
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src",
+        "test": "vscode-test"
+    },
+    "dependencies": {
+        "@vscode/prompt-tsx": "^0.3.0-alpha.12"
+    },
+    "devDependencies": {
+        "@types/node": "^20.17.10",
+        "@types/vscode": "^1.95.0",
+        "@types/mocha": "^10.0.9",
+        "@typescript-eslint/eslint-plugin": "^8.10.0",
+        "@typescript-eslint/parser": "^8.7.0",
+        "eslint": "^9.13.0",
+        "typescript": "^5.6.3",
+        "@vscode/test-cli": "^0.0.10",
+        "@vscode/test-electron": "^2.4.1"
+    }
+}
