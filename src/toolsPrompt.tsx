@@ -84,23 +84,40 @@ export class ToolUserPrompt extends PromptElement<ToolUserProps, void> {
             })
             .join('\n');
     }
-
+    private async getPackageJsonContent(): Promise<string> {
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+        if (!workspaceFolder) {
+            return 'No workspace folder found.';
+        }
+    
+        try {
+            const packageJsonPath = path.join(workspaceFolder.uri.fsPath, 'package.json');
+            const content = await fs.readFile(packageJsonPath, 'utf-8');
+            return content.trim();
+        } catch (error) {
+            return 'No package.json file found in the project.';
+        }
+    }
     async render(_state: void, _sizing: PromptSizing) {
-        const logger = Logger.getInstance();
-        const { structure, contents } = this.getProjectStructure();
-        logger.debug(`Project file structure:\n ${structure}`);
-        const useFullWorkspace = vscode.workspace.getConfiguration('cogent').get('use_full_workspace', true);
-        const customInstructions = await this.getCustomInstructions();
-        const osLevel = this.getOSLevel();
-        const shellType = this.getShellType();
-        
-        const fileContentsSection = useFullWorkspace
-            ? Object.entries(contents)
-                .map(([filePath, content]) => {
-                    return `\n${'='.repeat(80)}\n📝 File: ${filePath}\n${'='.repeat(80)}\n${this.addLineNumbers(content)}`;
-                })
-                .join('\n')
-            : '';
+    const logger = Logger.getInstance();
+    const { structure, contents } = this.getProjectStructure();
+    logger.debug(`Project file structure:\n ${structure}`);
+
+    const useFullWorkspace = vscode.workspace.getConfiguration('cogent').get('use_full_workspace', true);
+    const customInstructions = await this.getCustomInstructions();
+    const osLevel = this.getOSLevel();
+    const shellType = this.getShellType();
+
+    // Fetch package.json content
+    const packageJsonContent = await this.getPackageJsonContent();
+
+    const fileContentsSection = useFullWorkspace
+        ? Object.entries(contents)
+            .map(([filePath, content]) => {
+                return `\n${'='.repeat(80)}\n📝 File: ${filePath}\n${'='.repeat(80)}\n${this.addLineNumbers(content)}`;
+            })
+            .join('\n')
+        : '';
 
 
         const customInstructionsSection = customInstructions 
@@ -110,7 +127,7 @@ export class ToolUserPrompt extends PromptElement<ToolUserProps, void> {
         return (
             <>
                 <UserMessage>
-                    {`You are cogent, a coding assistant that combines technical mastery with innovative thinking. You excel at finding elegant solutions to complex problems and seeing angles others miss. Your approach balances pragmatic solutions with creative thinking.
+                    {`You are cogent, an angular assistant that combines technical mastery with angular expertise. You excel at upgrading angular 7 projects to angular 16 projects 
 
 ## Core Strengths
 - Breaking down complex problems into elegant solutions
@@ -123,6 +140,11 @@ export class ToolUserPrompt extends PromptElement<ToolUserProps, void> {
 
 ${structure}
 ${useFullWorkspace ? `\n📄 File Contents:\n${fileContentsSection}` : ''}
+
+📦 package.json:
+\`\`\`json
+${packageJsonContent}
+\`\`\`
 
 ## User's OS Level
 - ${osLevel} (using ${shellType})
