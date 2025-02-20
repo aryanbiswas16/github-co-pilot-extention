@@ -1,0 +1,4 @@
+
+// 1. The project is being upgraded in one shot so dont upgrade version by version 
+// 2. Follow Angular style guide
+// 3. RxJS syntax changes: .map() should be updated to .pipe(map()), and Obeservable.of() should be chanegd to of()
